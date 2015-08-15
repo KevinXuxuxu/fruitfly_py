@@ -1,8 +1,36 @@
+execfile("/vagrant/00-pyspark-setup.py")
+
 import scipy.io as sio
 import numpy as np
 import utilities as util
 import time
 import spams
+from munkres import Munkres
+# must install munkres 1.0.6: https://pypi.python.org/pypi/munkres/
+
+def dictLearnInit(X, K, method, p = 0):
+    if method in ["random", "exact"]:
+        ind = np.random.randint(low = 0, high = X.shape[1], size = K)
+        D = X[:, ind]
+        return D
+
+def dissimilarityDict(D1, D2, method):
+    if method == 'euclidean':
+        disMat = np.zeros((D1.shape[1], D2.shape[1]))
+        # inefficient here
+        for i in xrange(0, D1.shape[1]):
+            for j in xrange(0, D2.shape[1]):
+                disMat[i][j] = np.sum((D1[:, i] - D2[:, j]) ** 2)
+        matrix = disMat.tolist()
+        munkres = Munkres()
+        indexes = munkres.compute(matrix)
+        matchInd = np.zeros((D1.shape[1], ), dtype=int)
+        cost = 0
+        for row, col in indexes:
+            matchInd[i] = col
+            cost += matrix[row][col]
+    return (matchInd, cost)
+
 
 resolution = '32by16'
 mat_contents = sio.loadmat('./data/finalData/data32by16.mat')
@@ -63,39 +91,54 @@ for k in range(0, len_numPatterns):
 
     X = np.asfortranarray(X, dtype=float)
     # print X.shape
+
+    print "getting Dtemplate..."
+    tic = time.time()
     Dtemplate = spams.trainDL(X, **param)
+    toc = time.time()
+    print "finished. time passed "+str(toc-tic)+" s"
 
     # for each fixed dictionary K, we will repeat dictionary
     # learning for 100 times, each with a different initial value
     test_cases = 5
-    R = np.zeros((test_cases, ))
-    for i in xrange(0, test_cases):
-        if randomStart == 1:
-            D0 = util.dictLearnInit(X, K, 'random', 0)
-        param['D'] = np.asfortranarray(D0)
-        lparam = {'lambda1': Lambda,
+    R = []
+    for i in range(test_cases):
+        R += [X]
+    rdd = sc.parallelize(R)
+
+    def altp(x,p): # alter the D attribute in the param
+        p['D'] = np.asfortranarray( util.dictLearnInit(x, test_cases, 'random', 0) )
+        return (x,p)
+
+    def calcR((X,p,D,alpha)):
+        return np.mean(0.5 * sum((X - D * alpha) ** 2) + p['lambda1'] * sum(abs(alpha)))
+
+    def processD(d):
+        (permInd, cost) = dissimilarityDict(Dtemplate, d, 'euclidean')
+        return d[:, permInd]
+
+    def findBest(E1, E2):
+        if E1[1] > E2[1]:
+            return E2
+        return E1
+
+    lparam = {'lambda1': Lambda,
                   'pos': True,
                   'mode': 2,
                   'numThreads': -1
         }
-        tic = time.time()
-        D = spams.trainDL(X, **param)
-        alpha = spams.lasso(X, D, **lparam)
-        toc = time.time()
-        print 'Elapsed time is ' + str(toc - tic) + ' seconds.'
-        R[i] = np.mean(0.5 * sum((X - D * alpha) ** 2) + param['lambda1'] * sum(abs(alpha)))
-        print R[i]
 
-        (permInd, cost) = util.dissimilarityDict(Dtemplate, D, 'euclidean')
-        D = D[:, permInd] # permute the columns of D to match the template Dtemplate
+    print "start rdd transition."
+    tic = time.time()
+    p = (rdd.map(lambda x: altp(x, param))
+            .map(lambda (x,p): (x,p,spams.trainDL(x,**p)))
+            .map(lambda (x,p,D): (x,p,D,spams.lasso(x, D, **lparam)))
+            .map(lambda e: (e[2], calcR(e)))
+            .map(lambda (d, r): (processD(d), r))
+            .reduce(findBest)
+    )
+    toc = time.time()
+    print "all finished. time passed "+str(toc-tic)+" s"
+    print p
 
-        if i >= 1:
-            if R[i] < Rbest:
-                Dbest = D
-                Rbest = R[i]
-        else:
-            Dbest = D
-            Rbest = R[0]
-
-    # print path
-    sio.savemat(path + "bestDict.mat", {'Dbest': Dbest, 'R': Rbest})
+    sio.savemat(path + "bestDict.mat", {'Dbest': p[0], 'R': p[1]})
