@@ -100,14 +100,14 @@ for k in range(0, len_numPatterns):
 
     # for each fixed dictionary K, we will repeat dictionary
     # learning for 100 times, each with a different initial value
-    test_cases = 5
+    test_cases = 1
     R = []
     for i in range(test_cases):
         R += [X]
     rdd = sc.parallelize(R)
 
     def altp(x,p): # alter the D attribute in the param
-        p['D'] = np.asfortranarray( util.dictLearnInit(x, test_cases, 'random', 0) )
+        p['D'] = np.asfortranarray( util.dictLearnInit(x, p['K'], 'random', 0) )
         return (x,p)
 
     def calcR((X,p,D,alpha)):
@@ -141,4 +141,4 @@ for k in range(0, len_numPatterns):
     print "all finished. time passed "+str(toc-tic)+" s"
     print p
 
-    sio.savemat(path + "bestDict.mat", {'Dbest': p[0], 'R': p[1]})
+    sio.savemat(path + "bestDict.mat", {'DTemplate': Dtemplate, 'Dbest': p[0], 'R': p[1]})

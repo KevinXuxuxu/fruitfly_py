@@ -67,7 +67,7 @@ for k in range(0, len_numPatterns):
 
     # for each fixed dictionary K, we will repeat dictionary
     # learning for 100 times, each with a different initial value
-    test_cases = 5
+    test_cases = 1
     R = np.zeros((test_cases, ))
     for i in xrange(0, test_cases):
         if randomStart == 1:
@@ -86,8 +86,8 @@ for k in range(0, len_numPatterns):
         R[i] = np.mean(0.5 * sum((X - D * alpha) ** 2) + param['lambda1'] * sum(abs(alpha)))
         print R[i]
 
-        (permInd, cost) = util.dissimilarityDict(Dtemplate, D, 'euclidean')
-        D = D[:, permInd] # permute the columns of D to match the template Dtemplate
+        #(permInd, cost) = util.dissimilarityDict(Dtemplate, D, 'euclidean')
+        #D = D[:, permInd] # permute the columns of D to match the template Dtemplate
 
         if i >= 1:
             if R[i] < Rbest:
@@ -98,4 +98,4 @@ for k in range(0, len_numPatterns):
             Rbest = R[0]
 
     # print path
-    sio.savemat(path + "bestDict.mat", {'Dbest': Dbest, 'R': Rbest})
+    sio.savemat(path + "bestDict.mat", {'Ftemplate': Dtemplate, 'Dbest': Dbest, 'R': Rbest})
