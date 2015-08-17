@@ -1,4 +1,4 @@
 .DS_Store
 .idea/
 *.pyc
-
+my_pipeline/checkpoint/

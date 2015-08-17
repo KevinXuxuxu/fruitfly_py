@@ -134,7 +134,7 @@ for k in range(0, len_numPatterns):
             .map(lambda (x,p): (x,p,spams.trainDL(x,**p)))
             .map(lambda (x,p,D): (x,p,D,spams.lasso(x, D, **lparam)))
             .map(lambda e: (e[2], calcR(e)))
-            .map(lambda (d, r): (processD(d), r))
+            #.map(lambda (d, r): (processD(d), r))
             .reduce(findBest)
     )
     toc = time.time()
