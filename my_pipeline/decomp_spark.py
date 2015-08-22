@@ -74,7 +74,7 @@ for k in range(0, len_numPatterns):
         print 'To be continued'
     else:
         if randomStart == 1:
-            D0 = util.dictLearnInit(X, K, 'random', 0)
+            D0 = dictLearnInit(X, K, 'random', 0)
             path = './' + resolution + '/randomStart/K=' + str(K) + '/'
         # print path
     # os.makedirs(path)
