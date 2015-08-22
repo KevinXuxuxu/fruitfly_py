@@ -1,4 +1,8 @@
-execfile("/vagrant/00-pyspark-setup.py")
+__author__ = "Xu Fangzhou"
+__email__ = "kevin.xu.fangzhou@gmail.com"
+
+import os
+execfile(os.environ.get("PYSPARK_INIT"))
 
 import scipy.io as sio
 import numpy as np

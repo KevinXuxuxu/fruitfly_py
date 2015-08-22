@@ -1,3 +1,6 @@
+__author__ = "Xu Fangzhou"
+__email__ = "kevin.xu.fangzhou@gmail.com"
+
 import scipy.io as sio
 import numpy as np
 import utilities as util
