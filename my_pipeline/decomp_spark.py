@@ -111,7 +111,7 @@ for k in range(0, len_numPatterns):
     rdd = sc.parallelize(R)
 
     def altp(x,p): # alter the D attribute in the param
-        p['D'] = np.asfortranarray( util.dictLearnInit(x, p['K'], 'random', 0) )
+        p['D'] = np.asfortranarray( dictLearnInit(x, p['K'], 'random', 0) )
         return (x,p)
 
     def calcR((X,p,D,alpha)):
