@@ -36,6 +36,7 @@ doShift = 0 # do we want to shift the image
 
 len_numPatterns = len(numPatterns)
 for k in range(0, len_numPatterns):
+    tic = time.time()
 
     K = numPatterns[k]
     print 'Pattern ' + str(K) + ':'
@@ -70,7 +71,7 @@ for k in range(0, len_numPatterns):
 
     # for each fixed dictionary K, we will repeat dictionary
     # learning for 100 times, each with a different initial value
-    test_cases = 1
+    test_cases = 10
     R = np.zeros((test_cases, ))
     for i in xrange(0, test_cases):
         if randomStart == 1:
@@ -81,11 +82,8 @@ for k in range(0, len_numPatterns):
                   'mode': 2,
                   'numThreads': -1
         }
-        tic = time.time()
         D = spams.trainDL(X, **param)
         alpha = spams.lasso(X, D, **lparam)
-        toc = time.time()
-        print 'Elapsed time is ' + str(toc - tic) + ' seconds.'
         R[i] = np.mean(0.5 * sum((X - D * alpha) ** 2) + param['lambda1'] * sum(abs(alpha)))
         print R[i]
 
@@ -101,4 +99,7 @@ for k in range(0, len_numPatterns):
             Rbest = R[0]
 
     # print path
+    toc = time.time()
+    print 'Elapsed time is ' + str(toc - tic) + ' seconds.'
+    print Dbest
     sio.savemat(path + "bestDict.mat", {'Ftemplate': Dtemplate, 'Dbest': Dbest, 'R': Rbest})
