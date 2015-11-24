@@ -105,7 +105,7 @@ for k in range(0, len_numPatterns):
     print Dbest
     sio.savemat(path + "bestDict.mat", {'Ftemplate': Dtemplate, 'Dbest': Dbest, 'R': Rbest})
 
-    wt = csv.writer(open("output.csv"))
+    wt = csv.writer(open("output.csv", 'w'))
     wt.writerow([i for i in range(1,K+1)])
     for i in range(0, len(Dbest[0])):
         wt.writerow([Dbest[j][i] for j in range(0,K)])
